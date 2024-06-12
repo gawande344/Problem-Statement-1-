@@ -1,0 +1,52 @@
+import openai
+import csv
+import time
+from datetime import datetime
+
+openai.api_key = 'YOUR_OPENAI_API_KEY'
+
+def generate_sales_conversation(prompt, max_responses=10):
+    responses = []
+    for _ in range(max_responses):
+        response = openai.Completion.create(
+            engine="text-davinci-003",
+            prompt=prompt,
+            max_tokens=75,
+            n=1,
+            stop=None,
+            temperature=0.7
+        )
+        responses.append(response.choices[0].text.strip())
+        prompt += response.choices[0].text.strip() + "\n"
+    return responses
+
+def save_to_csv(data, filename='sales_conversations.csv'):
+    with open(filename, mode='w') as file:
+        writer = csv.writer(file)
+        writer.writerow(["Salesman", "User", "Timestamp"])
+        for row in data:
+            writer.writerow(row)
+
+def main():
+    conversations = []
+    prompts = [
+        "Salesman: Hi there! Are you looking for a new phone?",
+        "Salesman: Hello! Interested in a new laptop today?",
+        # Add more initial prompts as needed
+    ]
+    
+    for prompt in prompts:
+        conversation = generate_sales_conversation(prompt)
+        timestamp = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+        for i, response in enumerate(conversation):
+            role = "Salesman" if i % 2 == 0 else "User"
+            conversations.append([role, response, timestamp])
+            timestamp = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+    
+    save_to_csv(conversations)
+
+if __name__ == "__main__":
+    start_time = time.time()
+    main()
+    end_time = time.time()
+    print("Data generation time: {} seconds".format(end_time - start_time))
